@@ -7,14 +7,15 @@ import {View, Text} from 'react-native';
 //Screens
 
 import Contacts from './screens/Contacts'
-import Sos from './screens/Sos'
-import tutorials from './screens/Tutorials'
+import Home from './screens/Home'
 import Tutorials from './screens/Tutorials';
+import SosAlert from './screens/SosAlert';
 
 //screen names
 const contact = 'Contacts';
-const sos = 'SOS';
+const home = 'Home';
 const tutorial = 'Tutorials';
+const sosAlert = 'SosAlert';
 
 const Tab = createBottomTabNavigator();
 
@@ -23,7 +24,7 @@ export default function MainContainer(){
         
             <NavigationContainer>
                 <Tab.Navigator
-                initialRouteName={sos}
+                initialRouteName={home}
                 screenOptions={({route}) => ({
                     tabBarIcon:({focused,color, size}) => {
                         let iconName;
@@ -34,12 +35,16 @@ export default function MainContainer(){
                             iconName = focused?'call':'call-outline'
                         }
 
-                        else if (rn === sos){
-                            iconName = focused?'stop-circle':'stop-circle-outline' 
+                        else if (rn === home){
+                            iconName = focused?'home':'home-outline' 
                         }
 
-                        if (rn === tutorial){
+                        else if (rn === tutorial){
                             iconName = focused?'logo-youtube':'logo-youtube'
+                        }
+
+                        else if (rn === sosAlert){
+                            iconName = focused?'stop-circle':'stop-circle-outline'
                         }
 
                         return <Ionicons name = {iconName} size ={Isize} color={focused ? '#71C9CE' : '#71C9CE'} />
@@ -54,9 +59,11 @@ export default function MainContainer(){
                 sceneContainerStyle={{ backgroundColor: '#71C9CE' }} 
                 tabBarStyle = {{backgroundColor: '#A6E3E9'}}
                 >
+
+                <Tab.Screen name = {home} component={Home}/>    
                 <Tab.Screen name = {contact} component={Contacts}/>
-                <Tab.Screen name = {sos} component={Sos}/>
-                <Tab.Screen name = {tutorial} component={tutorials}/>
+                <Tab.Screen name = {tutorial} component={Tutorials}/>
+                <Tab.Screen name = {sosAlert} component={SosAlert}/>
 
                 </Tab.Navigator>
             </NavigationContainer>
