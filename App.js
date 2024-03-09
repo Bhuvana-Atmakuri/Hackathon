@@ -1,12 +1,40 @@
-import * as React from 'react';
-import 'react-native-gesture-handler';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from "@react-navigation/native-stack"
+import { Login, Signup} from "./screens";
+import Welcome from './screens/Welcome';
 
-import MainContainer from './NavBar/MainContainer';
 
-function App(){
-  return(
-    <MainContainer/>
+const Stack = createNativeStackNavigator();
+
+export default function App() {
+  
+  return (
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName='Welcome'
+      >
+        <Stack.Screen
+          name="Welcome"
+          component={Welcome}
+          options={{
+            headerShown: false
+          }}
+        />
+        <Stack.Screen
+          name="Login"
+          component={Login}
+          options={{
+            headerShown: false
+          }}
+        />
+        <Stack.Screen
+          name="Signup"
+          component={Signup}
+          options={{
+            headerShown: false
+          }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-
-export default App;
