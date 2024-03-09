@@ -5,15 +5,17 @@ const MASTER_URL = "https://api-ap-south-1.hygraph.com/v2/cltjvqyia0kgw06w94owen
 export const getTutorialList = async()=>{
     const query = gql`
     query TutorialList {
-        tutorials {
-          id
-          name
-          types
-          banner {
-            url
-          }
+      tutorials {
+        id
+        name
+        types
+        time
+        link
+        banner {
+          url
         }
       }
+    } 
       `
 
     const result=await request (MASTER_URL, query)
