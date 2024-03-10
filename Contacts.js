@@ -1,28 +1,88 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Linking, TextInput , Modal, Pressable} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Linking, TextInput } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function Contacts({ screens }) {
-  const [contactsData, setContactsData] = useState( [
-    { id: '1', name: 'Women Helpline', phoneNumber: '1091' , icon : <Ionicons size = {35} name="woman"/>},
-    { id: '2', name: 'National Helpline', phoneNumber: '112' , icon : <Ionicons size = {35}name="megaphone"/> },
-    { id: '3', name: 'Police', phoneNumber: '100' , icon : <Ionicons size = {35} name="car-sport"/>},
-    { id: '4', name: 'Ambulance', phoneNumber: '108' , icon :<Ionicons size = {35} name="id-card"/> },
-    { id: '5', name: 'Child Helpline', phoneNumber: '1098' , icon : <Ionicons size = {35} name="bicycle"/>},
-    { id: '6', name: 'Fire Services', phoneNumber: '101', icon : <Ionicons size = {35} name="flame"/> },
-    { id: '7', name: 'Pregnancy Medic', phoneNumber: '102' , icon : <Ionicons size = {35} name="medkit"/>},
-    { id: '8', name: 'Road Accidents', phoneNumber: '1073' , icon : <Ionicons size = {35} name="car"/>},
-    { id: '9', name: 'Railway Protection', phoneNumber: '182' , icon : <Ionicons size = {35} name="train"/>},
+  const [emergencyContacts, setEmergencyContacts] = useState([
+    { id: '1', name: 'Women Helpline', phoneNumber: '1091', icon: <Ionicons size={35} name="woman" /> },
+    { id: '2', name: 'National Helpline', phoneNumber: '112', icon: <Ionicons size={35} name="megaphone" /> },
+    { id: '3', name: 'Police', phoneNumber: '100', icon: <Ionicons size={35} name="car-sport" /> },
+    { id: '4', name: 'Ambulance', phoneNumber: '108', icon: <Ionicons size={35} name="id-card" /> },
+    { id: '5', name: 'Child Helpline', phoneNumber: '1098', icon: <Ionicons size={35} name="bicycle" /> },
+    { id: '6', name: 'Fire Services', phoneNumber: '101', icon: <Ionicons size={35} name="flame" /> },
+    { id: '7', name: 'Pregnancy Medic', phoneNumber: '102', icon: <Ionicons size={35} name="medkit" /> },
+    { id: '8', name: 'Road Accidents', phoneNumber: '1073', icon: <Ionicons size={35} name="car" /> },
+    { id: '9', name: 'Railway Protection', phoneNumber: '182', icon: <Ionicons size={35} name="train" /> },
   ]);
 
+  const [familyContacts, setFamilyContacts] = useState([]);
   const [newContact, setNewContact] = useState({ name: '', phoneNumber: '' });
-  
+  const [activeTab, setActiveTab] = useState('Emergency');
 
+  // Function to store family contacts using AsyncStorage
+  const storeFamilyContacts = async (contacts) => {
+    try {
+      await AsyncStorage.setItem('@familyContacts', JSON.stringify(contacts));
+    } catch (error) {
+      console.error('Error storing family contacts:', error);
+    }
+  };
+
+  // Function to retrieve family contacts from AsyncStorage
+  const retrieveFamilyContacts = async () => {
+    try {
+      const contacts = await AsyncStorage.getItem('@familyContacts');
+      if (contacts !== null) {
+        return JSON.parse(contacts);
+      }
+    } catch (error) {
+      console.error('Error retrieving family contacts:', error);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    // Retrieve family contacts when the component mounts
+    const fetchFamilyContacts = async () => {
+      const storedFamilyContacts = await retrieveFamilyContacts();
+      if (storedFamilyContacts) {
+        setFamilyContacts(storedFamilyContacts);
+      }
+    };
+
+    fetchFamilyContacts();
+  }, []);
+
+  // Function to add new family contact
+  const handleAddContact = () => {
+    if (newContact.name.trim() !== '' && newContact.phoneNumber.trim() !== '') {
+      const updatedFamilyContacts = [
+        ...familyContacts,
+        {
+          id: String(Date.now()),
+          name: newContact.name,
+          phoneNumber: newContact.phoneNumber,
+        },
+      ];
+
+      setFamilyContacts(updatedFamilyContacts);
+      setNewContact({ name: '', phoneNumber: '' });
+
+      // Store the updated family contacts
+      storeFamilyContacts(updatedFamilyContacts);
+    }
+  };
+
+  // Function to handle tab change
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+  };
+
+  // Function to handle calling a contact
   const handleCallPress = (phoneNumber) => {
     const phoneUrl = `tel:${phoneNumber}`;
-  
-  Linking.canOpenURL(phoneUrl)
+
+    Linking.canOpenURL(phoneUrl)
       .then((supported) => {
         if (supported) {
           return Linking.openURL(phoneUrl);
@@ -33,65 +93,79 @@ export default function Contacts({ screens }) {
       .catch((error) => console.error('Error opening the phone app:', error));
   };
 
-  const handleAddContact = () => {
-    if (newContact.name.trim() !== '' && newContact.phoneNumber.trim() !== '') {
-      const updatedContactsData = [
-        {
-          id: String(contactsData.length + 1),
-          name: newContact.name,
-          phoneNumber: newContact.phoneNumber,
-          icon: <Ionicons size={35} name="add-circle" color="black" />,
-        },
-        ...contactsData,
-      ];
-
-      setContactsData(updatedContactsData);
-      setNewContact({ name: '', phoneNumber: '' });
-    }
-  };
-
-  const renderItem = ({ item, index }) => (
-    <View style={[styles.contactContainer, index % 2 === 0 ? styles.evenItem : styles.oddItem]}>
+  // Render contact item for emergency contacts
+  const renderContactItem = ({ item }) => (
+    <View style={styles.contactContainer}>
       <Text style={styles.contactIcon}>{item.icon}</Text>
       <View style={styles.contactInfoContainer}>
         <Text style={styles.contactName}>{item.name}</Text>
         <Text style={styles.contactPhoneNumber}>{item.phoneNumber}</Text>
       </View>
       <TouchableOpacity onPress={() => handleCallPress(item.phoneNumber)}>
-        <Text style={styles.callIcon}>📞</Text>
+        <Ionicons name="call" size={25} color="#3498db" style={styles.callIcon} />
       </TouchableOpacity>
     </View>
   );
 
+  // Render family contact item
+  const renderFamilyContactItem = ({ item }) => (
+    <TouchableOpacity style={styles.familyContactContainer} onPress={() => handleCallPress(item.phoneNumber)}>
+      <Text style={styles.familyContactName}>{item.name}</Text>
+      <Ionicons name="call" size={25} color="#3498db" style={styles.callIcon} />
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.headerText}>Emergency Contacts</Text>
-        <TouchableOpacity onPress={handleAddContact}>
-          <Ionicons style={styles.addButton} name="add-circle" size={45} color="black" />
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'Emergency' && styles.activeTab]}
+          onPress={() => handleTabChange('Emergency')}
+        >
+          <Text style={styles.tabText}>Emergency</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'Family' && styles.activeTab]}
+          onPress={() => handleTabChange('Family')}
+        >
+          <Text style={styles.tabText}>Family</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.newContactContainer}>
-        <TextInput
-          style={styles.newContactInput}
-          placeholder="Name"
-          value={newContact.name}
-          onChangeText={(text) => setNewContact({ ...newContact, name: text })}
+
+      {activeTab === 'Emergency' ? (
+        <FlatList
+          data={emergencyContacts}
+          keyExtractor={(item) => item.id}
+          renderItem={renderContactItem}
+          showsVerticalScrollIndicator={false}
         />
-        <TextInput
-          style={styles.newContactInput}
-          placeholder="Phone Number"
-          keyboardType="numeric"
-          value={newContact.phoneNumber}
-          onChangeText={(text) => setNewContact({ ...newContact, phoneNumber: text })}
-        />
-      </View>
-      <FlatList
-        data={contactsData}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
-      />
+      ) : (
+        <View style={styles.familyContactsContainer}>
+          <TextInput
+            style={styles.newContactInput}
+            placeholder="Name"
+            value={newContact.name}
+            onChangeText={(text) => setNewContact({ ...newContact, name: text })}
+          />
+          <TextInput
+            style={styles.newContactInput}
+            placeholder="Phone Number"
+            keyboardType="numeric"
+            value={newContact.phoneNumber}
+            onChangeText={(text) => setNewContact({ ...newContact, phoneNumber: text })}
+          />
+          <TouchableOpacity style={styles.addButton} onPress={handleAddContact}>
+            <Ionicons name="add-circle" size={45} color="black" />
+          </TouchableOpacity>
+
+          <FlatList
+            data={familyContacts}
+            keyExtractor={(item) => item.id}
+            renderItem={renderFamilyContactItem}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -100,28 +174,33 @@ const styles = {
   container: {
     flex: 1,
     padding: 10,
-    backgroundColor: '#71C9CE', // Background color below the list items
+    backgroundColor: '#71C9CE',
   },
-  headerText: {
-    fontSize: 28,
+  tabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 10,
+  },
+  tab: {
+    backgroundColor: '#E3FDFD',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  activeTab: {
+    backgroundColor: '#A6E3E9',
+  },
+  tabText: {
+    fontSize: 18,
     fontWeight: 'bold',
-    textAlign: 'center',
-    padding: 15,
-    marginBottom:10,
-    
   },
   contactContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    borderRadius:20,
-    margin:8,
-  },
-  evenItem: {
-    backgroundColor: '#CBF1F5', // Background color for even items
-  },
-  oddItem: {
-    backgroundColor: '#E3FDFD', // Background color for odd items
+    borderRadius: 20,
+    margin: 8,
+    backgroundColor: '#CBF1F5',
   },
   contactIcon: {
     marginRight: 10,
@@ -136,32 +215,28 @@ const styles = {
   },
   contactPhoneNumber: {
     color: 'black',
-    fontSize:20,
+    fontSize: 20,
   },
-  callIcon: {
-    fontSize: 24,
-    color: '#3498db', // Call icon color
-  },
-  headerContainer:{
-    display:'flex',
-    flexDirection:'row',
-    border:10,
-    borderRadius:25,
-    backgroundColor: '#E3FDFD', // Header background color
-    color: 'black', // Header text color
-  },
-  addButton: {
-    margin:0,
-    padding:10,
-    
-  },
-  newContactContainer: {
-    marginTop:10,
-    backgroundColor: '#E3FDFD',
+  familyContactsContainer: {
+    flex: 1,
+    backgroundColor: '#F0F8FF',
     padding: 10,
     borderRadius: 10,
     borderWidth: 3,
     marginBottom: 10,
+  },
+  familyContactContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 20,
+    margin: 8,
+    backgroundColor: '#D4EFDF',
+  },
+  familyContactName: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: 'black',
   },
   newContactInput: {
     height: 40,
@@ -169,5 +244,11 @@ const styles = {
     borderRadius: 6,
     marginBottom: 10,
     paddingHorizontal: 10,
+  },
+  addButton: {
+    alignSelf: 'flex-end',
+  },
+  callIcon: {
+    marginLeft: 'auto',
   },
 };
