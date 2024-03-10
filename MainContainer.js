@@ -1,14 +1,16 @@
+
 import * as React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-
+import { View, Text, TouchableOpacity, StyleSheet,TextInput,Button, Alert } from 'react-native';
+import { useState } from 'react';
+import * as SMS from 'expo-sms';
 // Screens
 import Contacts from './screens/Contacts';
 import Home from './screens/Home';
 import Tutorials from './screens/Tutorials';
-import SosAlert from './screens/SosAlert';
+import SosAlert from './screens/SosAlert.js';
 
 // Screen names
 const contact = 'Contacts';
@@ -18,14 +20,32 @@ const sosAlert = 'SosAlert';
 
 const Tab = createBottomTabNavigator();
 
+
+
+export default function MainContainer() {
+  const [number,setNumber]=useState('6303535448');
+const [message,setMessage]=useState('Yup!This is working');
+// const checkSMS = async() =>{
+//   const isAvailable=await SMS.isAvailableAsync();
+//   if(isAvailable){
+//     alert('SMS is available on this device');
+//   }
+//   else{
+//     alert('SMS is not available on this device');
+//   }
+// };
+const sendSMS = async() =>{
+  const {result} = await SMS.sendSMSAsync(number,message);
+  if(result === 'sent'){
+    alert('Message Sent Successfully');
+  }
+}
 const SosButton = ({ onPress, focused }) => (
-  <TouchableOpacity style={[styles.tabBarButton, focused && styles.sosButton]} onPress={onPress}>
+  <TouchableOpacity style={[styles.tabBarButton, focused && styles.sosButton]} onPress={sendSMS}>
     <Ionicons name="stop-circle" size={30} color={focused ? 'white' : 'red'} />
     <Text style={[styles.buttonLabel, focused && styles.buttonLabelFocused]}>SOS Alert</Text>
   </TouchableOpacity>
 );
-
-export default function MainContainer() {
   return (
     <NavigationContainer>
       <Tab.Navigator
