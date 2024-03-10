@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import MapView, { Marker, Callout } from 'react-native-maps';
+import MapView, { Marker,Callout} from 'react-native-maps';
 import { StyleSheet, View, Text, TouchableOpacity, Button } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
@@ -13,7 +13,7 @@ export default function Home({ NavBar }) {
   });
   const [locationName, setLocationName] = useState('');
   const [rating, setRating] = useState(0);
-  const [votes, setVotes] = useState(0); 
+  const [votes, setVotes] = useState(null); // Set initial state to null
   const [submitted, setSubmitted] = useState(false);
 
   const userLocation = async () => {
@@ -64,35 +64,43 @@ export default function Home({ NavBar }) {
   };
 
   const submitRating = () => {
-    
-    const newVotes = votes + 1; 
-    const newRating = ((rating || 0) * votes + rating) / newVotes; 
+    // Perform action when user submits rating
+    const newVotes = (votes || 0) + 1; // Check if votes is null and default to 0
+    const newRating = ((rating || 0) * (votes || 0) + rating) / newVotes; // Check if rating and votes are null and default to 0
     setVotes(newVotes);
     setRating(newRating);
     setSubmitted(true);
-    saveRating();
+    saveRating(); // Save rating to AsyncStorage
   };
 
   useEffect(() => {
     userLocation();
-    loadRating(); 
+    loadRating(); // Load rating from AsyncStorage
   }, []);
 
   return (
     <View style={styles.container}>
       <MapView style={styles.map} region={mapRegion}>
-        <Marker coordinate={mapRegion}>
+      <Marker coordinate={mapRegion}>
           <Callout style={styles.callout}>
-            <Text>{locationName}</Text>
-            <View style={styles.starContainer}>
-              {[1, 2, 3, 4, 5].map((item) => (
-                <TouchableOpacity
-                  key={item}
-                  onPress={() => setRating(item)}
-                >
-                  <Text style={[styles.star, item <= rating && styles.selectedStar]}>★</Text>
-                </TouchableOpacity>
-              ))}
+            <View style={styles.calloutContent}>
+              <Text>{locationName}</Text>
+              <View style={styles.starContainer}>
+                {[1, 2, 3, 4, 5].map((item) => (
+                  <TouchableOpacity
+                    key={item}
+                    onPress={() => setRating(item)}
+                  >
+                    <Text style={[styles.star, item <= rating && styles.selectedStar]}>★</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              {submitted && (
+                <View>
+                  <Text>Safety Percentage: {(rating / 5 * 100).toFixed(2)}%</Text>
+                  <Text>Total Votes: {votes}</Text>
+                </View>
+              )}
             </View>
           </Callout>
         </Marker>
@@ -100,6 +108,16 @@ export default function Home({ NavBar }) {
       {!submitted && (
         <View style={styles.ratingContainer}>
           <Text>How safe do you think this place is?</Text>
+          <View style={styles.starContainer}>
+            {[1, 2, 3, 4, 5].map((item) => (
+              <TouchableOpacity
+                key={item}
+                onPress={() => setRating(item)}
+              >
+                <Text style={[styles.star, item <= rating && styles.selectedStar]}>★</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
           <Button title="Submit Review" onPress={submitRating} />
         </View>
       )}
@@ -142,5 +160,8 @@ const styles = StyleSheet.create({
   callout: {
     width: 200,
     padding: 10,
+  },
+  calloutContent: {
+    alignItems: 'center',
   },
 });
